@@ -7,31 +7,23 @@ export default async function StickersPage() {
   const session = await getServerSession(authOptions);
   const userId = session!.user.id;
 
-  const rows = await sql`
-    SELECT
-      s.id, s.number, s.code, s.team, s.player_name, s.is_special,
-      COALESCE(us.status, 'missing') as status
+  const stickers = await sql`
+    SELECT s.id, s.number, s.team, s.player_name, COALESCE(us.quantity, 0) as quantity
     FROM stickers s
     LEFT JOIN user_stickers us ON us.sticker_id = s.id AND us.user_id = ${userId}
-    ORDER BY s.number
+    ORDER BY s.number ASC
   `;
 
-  const stickers = rows.map((r) => ({
-    id: r.id,
-    number: r.number,
-    code: r.code,
-    team: r.team,
-    player_name: r.player_name,
-    is_special: r.is_special,
-    status: r.status as 'collected' | 'repeated' | 'missing',
-  }));
-
-  const teams = [...new Set(stickers.map((s) => s.team))].sort();
+  const teamsResult = await sql`SELECT DISTINCT team FROM stickers ORDER BY team ASC`;
+  const teams = teamsResult.map((r: Record<string, any>) => r.team as string);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Figurinhas</h1>
-      <StickersGrid stickers={stickers} teams={teams} />
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold tracking-tight">Figurinhas</h1>
+        <p className="text-sm text-muted-foreground">Gerencie sua coleção</p>
+      </div>
+      <StickersGrid stickers={stickers as any} teams={teams} />
     </div>
   );
 }

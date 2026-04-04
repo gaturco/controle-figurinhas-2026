@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ThemeToggle from '@/components/ThemeToggle';
 
 type Mode = 'login' | 'register';
 
@@ -54,125 +59,113 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* lado esquerdo — visual */}
-      <div className="hidden lg:flex flex-col justify-between bg-[#0a1628] p-12 text-white">
+      {/* Painel esquerdo */}
+      <div className="hidden lg:flex flex-col justify-between bg-primary text-primary-foreground p-12">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <span className="text-2xl">⚽</span>
-          <span className="text-[#c9a84c]">Copa 2026</span>
+          <span style={{ color: 'var(--gold)' }}>Copa 2026</span>
         </div>
         <div>
-          <blockquote className="text-2xl font-light leading-relaxed text-gray-200">
+          <blockquote className="text-2xl font-light leading-relaxed opacity-90">
             "O futebol é a coisa mais importante<br />das menos importantes."
           </blockquote>
-          <p className="mt-4 text-gray-400">— Arrigo Sacchi</p>
+          <p className="mt-4 opacity-50 text-sm">— Arrigo Sacchi</p>
         </div>
-        <p className="text-sm text-gray-500">© 2026 Controle de Figurinhas</p>
+        <p className="text-sm opacity-40">© 2026 Controle de Figurinhas</p>
       </div>
 
-      {/* lado direito — formulário */}
-      <div className="flex flex-col items-center justify-center px-8 py-12 bg-white">
-        <div className="w-full max-w-sm">
-          {/* logo mobile */}
-          <div className="flex items-center gap-2 mb-10 lg:hidden">
-            <span className="text-2xl">⚽</span>
-            <span className="text-lg font-semibold text-[#0a1628]">Copa 2026</span>
+      {/* Painel direito */}
+      <div className="flex flex-col">
+        <div className="flex justify-between items-center p-4 lg:justify-end">
+          <div className="flex items-center gap-2 lg:hidden font-semibold">
+            <span>⚽</span>
+            <span>Copa 2026</span>
           </div>
+          <ThemeToggle />
+        </div>
 
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {mode === 'login' ? 'Bem-vindo de volta' : 'Criar nova conta'}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {mode === 'login'
-                ? 'Entre com seu email e senha para continuar.'
-                : 'Preencha os dados abaixo para criar sua conta.'}
-            </p>
-          </div>
+        <div className="flex flex-1 items-center justify-center px-8 pb-12">
+          <Card className="w-full max-w-sm border-0 shadow-none">
+            <CardHeader className="px-0">
+              <CardTitle className="text-2xl">
+                {mode === 'login' ? 'Bem-vindo de volta' : 'Criar nova conta'}
+              </CardTitle>
+              <CardDescription>
+                {mode === 'login'
+                  ? 'Entre com seu email e senha para continuar.'
+                  : 'Preencha os dados abaixo para criar sua conta.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === 'register' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome completo</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder="João Silva"
+                    />
+                  </div>
+                )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'register' && (
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">Nome completo</label>
-                <input
-                  name="name"
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="João Silva"
-                  className="w-full h-10 px-3 rounded-md border border-gray-300 text-sm outline-none focus:border-[#0a1628] focus:ring-2 focus:ring-[#0a1628]/20 transition"
-                />
-              </div>
-            )}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="joao@email.com"
+                  />
+                </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Email</label>
-              <input
-                name="email"
-                type="email"
-                required
-                value={form.email}
-                onChange={handleChange}
-                placeholder="joao@email.com"
-                className="w-full h-10 px-3 rounded-md border border-gray-300 text-sm outline-none focus:border-[#0a1628] focus:ring-2 focus:ring-[#0a1628]/20 transition"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                  />
+                </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Senha</label>
-              <input
-                name="password"
-                type="password"
-                required
-                value={form.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full h-10 px-3 rounded-md border border-gray-300 text-sm outline-none focus:border-[#0a1628] focus:ring-2 focus:ring-[#0a1628]/20 transition"
-              />
-            </div>
+                {error && (
+                  <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
+                    {error}
+                  </p>
+                )}
 
-            {error && (
-              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                {error}
-              </div>
-            )}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading
+                    ? 'Aguarde...'
+                    : mode === 'login'
+                    ? 'Entrar'
+                    : 'Criar conta'}
+                </Button>
+              </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-10 bg-[#0a1628] hover:bg-[#152238] text-white text-sm font-medium rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading
-                ? 'Aguarde...'
-                : mode === 'login'
-                ? 'Entrar'
-                : 'Criar conta'}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-gray-500">
-            {mode === 'login' ? (
-              <>
-                Não tem uma conta?{' '}
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                {mode === 'login' ? 'Não tem uma conta? ' : 'Já tem uma conta? '}
                 <button
-                  onClick={() => { setMode('register'); setError(''); }}
-                  className="font-medium text-[#0a1628] hover:underline"
+                  type="button"
+                  onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
+                  className="font-medium text-primary underline-offset-4 hover:underline"
                 >
-                  Criar conta
+                  {mode === 'login' ? 'Criar conta' : 'Entrar'}
                 </button>
-              </>
-            ) : (
-              <>
-                Já tem uma conta?{' '}
-                <button
-                  onClick={() => { setMode('login'); setError(''); }}
-                  className="font-medium text-[#0a1628] hover:underline"
-                >
-                  Entrar
-                </button>
-              </>
-            )}
-          </div>
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -1,6 +1,8 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import sql from '@/lib/db';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { BookOpen, CheckCircle, XCircle, Copy } from 'lucide-react';
 import Link from 'next/link';
 
@@ -10,62 +12,69 @@ export default async function DashboardPage() {
 
   const [totalResult, collectedResult, repeatedResult] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM stickers`,
-    sql`SELECT COUNT(*) as count FROM user_stickers WHERE user_id = ${userId} AND status = 'collected'`,
-    sql`SELECT COUNT(*) as count FROM user_stickers WHERE user_id = ${userId} AND status = 'repeated'`,
+    sql`SELECT COUNT(*) as count FROM user_stickers WHERE user_id = ${userId} AND quantity >= 1`,
+    sql`SELECT COALESCE(SUM(quantity - 1), 0) as count FROM user_stickers WHERE user_id = ${userId} AND quantity > 1`,
   ]);
 
   const total = Number(totalResult[0].count);
   const collected = Number(collectedResult[0].count);
   const repeated = Number(repeatedResult[0].count);
-  const missing = total - collected - repeated;
+  const missing = total - collected;
   const progress = total > 0 ? Math.round((collected / total) * 100) : 0;
 
   const stats = [
-    { label: 'Total do Álbum', value: total, icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Coletadas', value: collected, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Faltando', value: missing, icon: XCircle, color: 'text-red-500', bg: 'bg-red-50' },
-    { label: 'Repetidas', value: repeated, icon: Copy, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+    { label: 'Total', value: total, icon: BookOpen, className: 'text-blue-500' },
+    { label: 'Coletadas', value: collected, icon: CheckCircle, className: 'text-green-500' },
+    { label: 'Faltando', value: missing, icon: XCircle, className: 'text-destructive' },
+    { label: 'Repetidas', value: repeated, icon: Copy, className: 'text-yellow-500' },
   ];
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Meu Álbum</h1>
-        <p className="text-gray-500 mt-1">Copa do Mundo 2026</p>
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold tracking-tight">Meu Álbum</h1>
+        <p className="text-sm text-muted-foreground">Copa do Mundo 2026</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {stats.map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className={`inline-flex p-2 rounded-lg ${bg} mb-3`}>
-              <Icon size={20} className={color} />
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            <p className="text-sm text-gray-500 mt-0.5">{label}</p>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        {stats.map(({ label, value, icon: Icon, className }) => (
+          <Card key={label}>
+            <CardHeader className="flex flex-row items-center justify-between pb-1 space-y-0 pt-4 px-4">
+              <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
+              <Icon className={`h-4 w-4 ${className}`} />
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-        <div className="flex justify-between items-center mb-3">
-          <span className="font-medium text-gray-700">Progresso do Álbum</span>
-          <span className="text-[#c9a84c] font-bold">{progress}%</span>
-        </div>
-        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-[#0a1628] to-[#c9a84c] rounded-full transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <p className="text-sm text-gray-500 mt-2">{collected} de {total} figurinhas coletadas</p>
-      </div>
+           <Card>
+        <CardContent className="pt-4 space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">{collected} de {total} figurinhas</span>
+            <span className="font-semibold" style={{ color: 'var(--gold)' }}>{progress}%</span>
+          </div>
+          <div className="h-3 rounded-full overflow-hidden bg-muted border border-border">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(to right, var(--gold), #e6c358)',
+              }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Progresso do álbum</p>
+        </CardContent>
+      </Card>
 
-      <Link
-        href="/dashboard/stickers"
-        className="inline-flex items-center gap-2 bg-[#0a1628] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[#152238] transition-colors"
-      >
-        <BookOpen size={18} /> Ver Todas as Figurinhas
-      </Link>
+      <Button className="w-full" asChild>
+        <Link href="/dashboard/stickers">
+          <BookOpen className="mr-2 h-4 w-4" />
+          Ver Todas as Figurinhas
+        </Link>
+      </Button>
     </div>
   );
 }
