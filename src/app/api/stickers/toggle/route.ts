@@ -1,22 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { sql } from "@/lib/db";
-import { auth } from "@/auth";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import sql from '@/lib/db';
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
 
-  const { stickerId, status, userId } = await req.json();
+  const { stickerId, action } = await req.json();
+  const userId = session.user.id;
 
-  if (status === "missing") {
-    await sql`DELETE FROM colecao_usuario WHERE usuario_id = ${userId} AND figurinha_id = ${stickerId}`;
-  } else {
-    await sql`
-      INSERT INTO colecao_usuario (usuario_id, figurinha_id, status)
-      VALUES (${userId}, ${stickerId}, ${status})
-      ON CONFLICT (usuario_id, figurinha_id) DO UPDATE SET status = EXCLUDED.status
-    `;
+  const existing = await sql`
+    SELECT id, status FROM user_stickers WHERE user_id = ${userId} AND sticker_id = ${stickerId}
+  `;
+
+  if (action === 'remove') {
+    await sql`DELETE FROM user_stickers WHERE user_id = ${userId} AND sticker_id = ${stickerId}`;
+    return NextResponse.json({ status: 'missing' });
   }
 
-  return NextResponse.json({ ok: true });
+  if (existing.length === 0) {
+    await sql`INSERT INTO user_stickers (user_id, sticker_id, status) VALUES (${userId}, ${stickerId}, ${action})`;
+  } else {
+    await sql`UPDATE user_stickers SET status = ${action} WHERE user_id = ${userId} AND sticker_id = ${stickerId}`;
+  }
+
+  return NextResponse.json({ status: action });
 }

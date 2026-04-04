@@ -1,74 +1,71 @@
-import { auth } from "@/auth";
-import { sql } from "@/lib/db";
-import { ALL_STICKERS } from "@/lib/data";
-import { Package, CheckCircle2, XCircle, Copy } from "lucide-react";
-
-async function getStats(userId: string) {
-  try {
-    const rows = await sql`SELECT status, COUNT(*) as count FROM colecao_usuario WHERE usuario_id = ${userId} GROUP BY status`;
-    const collected = Number((rows as any[]).find((r) => r.status === "collected")?.count ?? 0);
-    const repeated = Number((rows as any[]).find((r) => r.status === "repeated")?.count ?? 0);
-    return { collected, repeated };
-  } catch {
-    return { collected: 0, repeated: 0 };
-  }
-}
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import sql from '@/lib/db';
+import { BookOpen, CheckCircle, XCircle, Copy } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function DashboardPage() {
-  const session = await auth();
-  const userId = (session?.user as { id?: string })?.id ?? "";
-  const { collected, repeated } = await getStats(userId);
-  const total = ALL_STICKERS.length;
-  const missing = total - collected;
-  const percent = total > 0 ? Math.round((collected / total) * 100) : 0;
+  const session = await getServerSession(authOptions);
+  const userId = session!.user.id;
+
+  const [totalResult, collectedResult, repeatedResult] = await Promise.all([
+    sql`SELECT COUNT(*) as count FROM stickers`,
+    sql`SELECT COUNT(*) as count FROM user_stickers WHERE user_id = ${userId} AND status = 'collected'`,
+    sql`SELECT COUNT(*) as count FROM user_stickers WHERE user_id = ${userId} AND status = 'repeated'`,
+  ]);
+
+  const total = Number(totalResult[0].count);
+  const collected = Number(collectedResult[0].count);
+  const repeated = Number(repeatedResult[0].count);
+  const missing = total - collected - repeated;
+  const progress = total > 0 ? Math.round((collected / total) * 100) : 0;
 
   const stats = [
-    { label: "Total", value: total, icon: Package, color: "bg-[#1a2e4a]", textColor: "text-white" },
-    { label: "Coletadas", value: collected, icon: CheckCircle2, color: "bg-emerald-500", textColor: "text-white" },
-    { label: "Faltando", value: missing, icon: XCircle, color: "bg-amber-500", textColor: "text-white" },
-    { label: "Repetidas", value: repeated, icon: Copy, color: "bg-[#c9a84c]", textColor: "text-white" },
+    { label: 'Total do Álbum', value: total, icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Coletadas', value: collected, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Faltando', value: missing, icon: XCircle, color: 'text-red-500', bg: 'bg-red-50' },
+    { label: 'Repetidas', value: repeated, icon: Copy, color: 'text-yellow-600', bg: 'bg-yellow-50' },
   ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Minha Colecao</h1>
-        <p className="text-slate-500 mt-1">Copa do Mundo 2026</p>
+    <div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Meu Álbum</h1>
+        <p className="text-gray-500 mt-1">Copa do Mundo 2026</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex flex-col gap-3">
-            <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${s.color}`}>
-              <s.icon className={`w-5 h-5 ${s.textColor}`} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {stats.map(({ label, value, icon: Icon, color, bg }) => (
+          <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <div className={`inline-flex p-2 rounded-lg ${bg} mb-3`}>
+              <Icon size={20} className={color} />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{s.value}</p>
-              <p className="text-sm text-slate-500">{s.label}</p>
-            </div>
+            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm text-gray-500 mt-0.5">{label}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-slate-700">Progresso Geral</h2>
-          <span className="text-sm font-bold text-[#c9a84c]">{percent}%</span>
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+        <div className="flex justify-between items-center mb-3">
+          <span className="font-medium text-gray-700">Progresso do Álbum</span>
+          <span className="text-[#c9a84c] font-bold">{progress}%</span>
         </div>
-        <div className="w-full bg-slate-100 rounded-full h-3">
+        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="bg-gradient-to-r from-[#1a2e4a] to-[#c9a84c] h-3 rounded-full transition-all duration-500"
-            style={{ width: `${percent}%` }}
+            className="h-full bg-gradient-to-r from-[#0a1628] to-[#c9a84c] rounded-full transition-all"
+            style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-sm text-slate-500 mt-2">{collected} de {total} figurinhas coletadas</p>
+        <p className="text-sm text-gray-500 mt-2">{collected} de {total} figurinhas coletadas</p>
       </div>
 
-      <div className="flex gap-4">
-        <a href="/dashboard/stickers" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a2e4a] text-white text-sm font-medium rounded-lg hover:bg-[#243d61] transition-colors">
-          Ver todas as figurinhas
-        </a>
-      </div>
+      <Link
+        href="/dashboard/stickers"
+        className="inline-flex items-center gap-2 bg-[#0a1628] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[#152238] transition-colors"
+      >
+        <BookOpen size={18} /> Ver Todas as Figurinhas
+      </Link>
     </div>
   );
 }

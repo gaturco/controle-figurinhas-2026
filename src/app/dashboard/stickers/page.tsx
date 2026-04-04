@@ -1,34 +1,37 @@
-import { auth } from "@/auth";
-import { sql } from "@/lib/db";
-import { ALL_STICKERS } from "@/lib/data";
-import { Sticker } from "@/lib/types";
-import StickerGrid from "./StickerGrid";
-
-async function getUserStickers(userId: string): Promise<Sticker[]> {
-  try {
-    const rows = await sql`SELECT figurinha_id, status FROM colecao_usuario WHERE usuario_id = ${userId}`;
-    const map = new Map((rows as any[]).map((r) => [r.figurinha_id as number, r.status as string]));
-    return ALL_STICKERS.map((s) => ({
-      ...s,
-      status: (map.get(s.id) as Sticker["status"]) ?? "missing",
-    }));
-  } catch {
-    return ALL_STICKERS;
-  }
-}
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import sql from '@/lib/db';
+import StickersGrid from '@/components/StickersGrid';
 
 export default async function StickersPage() {
-  const session = await auth();
-  const userId = (session?.user as { id?: string })?.id ?? "";
-  const stickers = await getUserStickers(userId);
+  const session = await getServerSession(authOptions);
+  const userId = session!.user.id;
+
+  const rows = await sql`
+    SELECT
+      s.id, s.number, s.code, s.team, s.player_name, s.is_special,
+      COALESCE(us.status, 'missing') as status
+    FROM stickers s
+    LEFT JOIN user_stickers us ON us.sticker_id = s.id AND us.user_id = ${userId}
+    ORDER BY s.number
+  `;
+
+  const stickers = rows.map((r) => ({
+    id: r.id,
+    number: r.number,
+    code: r.code,
+    team: r.team,
+    player_name: r.player_name,
+    is_special: r.is_special,
+    status: r.status as 'collected' | 'repeated' | 'missing',
+  }));
+
+  const teams = [...new Set(stickers.map((s) => s.team))].sort();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Figurinhas</h1>
-        <p className="text-slate-500 mt-1">Clique em uma figurinha para alterar o status: Faltando → Coletada → Repetida</p>
-      </div>
-      <StickerGrid initialStickers={stickers} userId={userId} />
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Figurinhas</h1>
+      <StickersGrid stickers={stickers} teams={teams} />
     </div>
   );
 }
