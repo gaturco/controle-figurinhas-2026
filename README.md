@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# 🏆 Copa 2026 - Meu Álbum Digital
 
-First, run the development server:
+Gerenciador digital de figurinhas da Copa do Mundo FIFA 2026. Com este app, você pode marcar suas figurinhas como **coletadas**, **faltantes** ou **repetidas** e acompanhar seu progresso até completar o álbum!
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠 Tecnologias Utilizadas
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Frontend:** [Next.js 14+](https://nextjs.org/) (App Router)
+- **Estilização:** [Tailwind CSS](https://tailwindcss.com/)
+- **Backend/Auth:** [Supabase](https://supabase.io/)
+- **Deploy:** [Vercel](https://vercel.com/)
+- **Ícones:** [Lucide React](https://lucide.dev/)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎯 Funcionalidades
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Autenticação de usuários via Supabase
+- Dashboard com resumo do progresso do álbum
+- Lista completa de figurinhas organizadas por seleção
+- Sistema de marcação: coletada / faltante / repetida
+- Filtros por seleção e busca por nome ou número da figurinha
 
-## Learn More
+## 🚀 Como Rodar o Projeto Localmente
 
-To learn more about Next.js, take a look at the following resources:
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/copa2026-stickers-app.git
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Entre na pasta do projeto:
+   ```bash
+   cd copa2026-stickers-app
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Instale as dependências:
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+4. Crie um arquivo `.env.local` na raiz com suas variáveis do Supabase:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=SUA_URL_DO_SUPABASE
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+6. Acesse no navegador: [http://localhost:3000](http://localhost:3000)
+# controle-figurinhas-2026
