@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,13 +11,22 @@ import StickerCard from './StickerCard';
 
 interface Sticker {
   id: string;
-  number: number;
+  number: number | string;
   team: string;
   player_name: string;
   quantity: number;
 }
 
 const PAGE_SIZE = 20;
+const STATUS_VALUES = new Set(['all', 'collected', 'repeated', 'missing']);
+
+function normalizeToken(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
 
 function getPageNumbers(current: number, total: number): (number | '...')[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -31,11 +41,15 @@ function getPageNumbers(current: number, total: number): (number | '...')[] {
 }
 
 export default function StickersGrid({ stickers: initial, teams }: { stickers: Sticker[]; teams: string[] }) {
+  const searchParams = useSearchParams();
+  const statusFromUrl = searchParams.get('status');
+  const initialStatus = statusFromUrl && STATUS_VALUES.has(statusFromUrl) ? statusFromUrl : 'all';
+
   const [stickers, setStickers] = useState(initial);
   const [search, setSearch] = useState('');
   const [teamSearch, setTeamSearch] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [page, setPage] = useState(1);
 
   const filteredTeams = teams.filter((t) =>
@@ -47,10 +61,16 @@ export default function StickersGrid({ stickers: initial, teams }: { stickers: S
   };
 
   const filtered = stickers.filter((s) => {
+    const qRaw = search.trim().toLowerCase();
+    const q = normalizeToken(search);
+    const numberRaw = String(s.number);
+    const numberNormalized = normalizeToken(numberRaw);
+
     const matchesSearch =
-      search === '' ||
-      s.player_name.toLowerCase().includes(search.toLowerCase()) ||
-      String(s.number).includes(search);
+      qRaw === '' ||
+      s.player_name.toLowerCase().includes(qRaw) ||
+      numberRaw.toLowerCase().includes(qRaw) ||
+      (q !== '' && numberNormalized.includes(q));
     const matchesTeam = selectedTeam === 'all' || s.team === selectedTeam;
     const matchesStatus =
       selectedStatus === 'all' ||
@@ -65,6 +85,10 @@ export default function StickersGrid({ stickers: initial, teams }: { stickers: S
   const pageNumbers = getPageNumbers(page, totalPages);
 
   useEffect(() => { setPage(1); }, [search, selectedTeam, selectedStatus]);
+  useEffect(() => {
+    const nextStatus = statusFromUrl && STATUS_VALUES.has(statusFromUrl) ? statusFromUrl : 'all';
+    setSelectedStatus((current) => (current === nextStatus ? current : nextStatus));
+  }, [statusFromUrl]);
 
   return (
     <div className="space-y-4">

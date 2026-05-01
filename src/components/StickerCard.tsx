@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 interface Sticker {
   id: string;
-  number: number;
+  number: number | string;
   team: string;
   player_name: string;
   quantity: number;
@@ -16,6 +16,19 @@ interface Sticker {
 interface Props {
   sticker: Sticker;
   onQuantityChange: (id: string, qty: number) => void;
+}
+
+function formatStickerNumber(value: Sticker['number']) {
+  const raw = String(value).trim();
+  const cleaned = raw.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+
+  const spaced = cleaned.match(/^([a-z]{2,10})\s*0*(\d+)$/i);
+  if (spaced) return `${spaced[1].toUpperCase()} ${Number(spaced[2])}`;
+
+  const compact = raw.match(/^([a-z]{2,10})0*(\d+)$/i);
+  if (compact) return `${compact[1].toUpperCase()} ${Number(compact[2])}`;
+
+  return cleaned;
 }
 
 export default function StickerCard({ sticker, onQuantityChange }: Props) {
@@ -37,7 +50,7 @@ export default function StickerCard({ sticker, onQuantityChange }: Props) {
 
   const handleCardClick = () => {
     if (loading) return;
-    qty === 0 ? send('collect') : send('remove');
+    if (qty === 0) send('collect');
   };
 
   const handleIncrement = (e: React.MouseEvent) => {
@@ -81,7 +94,7 @@ export default function StickerCard({ sticker, onQuantityChange }: Props) {
         </button>
       )}
 
-      <p className={cn('text-xs font-mono mb-1', qty === 0 ? 'text-muted-foreground' : 'opacity-60')}>#{sticker.number}</p>
+      <p className={cn('text-xs font-mono mb-1', qty === 0 ? 'text-muted-foreground' : 'opacity-60')}>{formatStickerNumber(sticker.number)}</p>
       <p className={cn('font-semibold text-sm leading-snug pr-9', qty === 0 && 'text-foreground')}>{sticker.player_name}</p>
       <p className={cn('text-xs mt-0.5', qty === 0 ? 'text-muted-foreground' : 'opacity-50')}>{sticker.team}</p>
 

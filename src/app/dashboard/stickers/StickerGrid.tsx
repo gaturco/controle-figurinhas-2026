@@ -28,6 +28,19 @@ interface Props {
   userId: string;
 }
 
+function formatStickerCode(code: string) {
+  const value = code.trim();
+  const cleaned = value.replace(/[-_]+/g, " ").replace(/\s+/g, " ");
+
+  const match = cleaned.match(/^([a-z]{2,10})\s*0*(\d+)$/i);
+  if (match) return `${match[1].toUpperCase()} ${Number(match[2])}`;
+
+  const compactMatch = value.match(/^([a-z]{2,10})0*(\d+)$/i);
+  if (compactMatch) return `${compactMatch[1].toUpperCase()} ${Number(compactMatch[2])}`;
+
+  return cleaned;
+}
+
 export default function StickerGrid({ initialStickers, userId }: Props) {
   const [stickers, setStickers] = useState(initialStickers);
   const [search, setSearch] = useState("");
@@ -37,7 +50,11 @@ export default function StickerGrid({ initialStickers, userId }: Props) {
   const filtered = stickers.filter((s) => {
     const matchTeam = teamFilter === "Todos" || s.selecao === teamFilter;
     const q = search.toLowerCase();
-    const matchSearch = !q || s.nome_jogador.toLowerCase().includes(q) || s.codigo.toLowerCase().includes(q);
+    const matchSearch =
+      !q ||
+      s.nome_jogador.toLowerCase().includes(q) ||
+      s.codigo.toLowerCase().includes(q) ||
+      formatStickerCode(s.codigo).toLowerCase().includes(q);
     return matchTeam && matchSearch;
   });
 
@@ -116,7 +133,7 @@ export default function StickerGrid({ initialStickers, userId }: Props) {
               {sticker.status === "repeated" && (
                 <RefreshCw className="absolute top-2 right-2 w-3.5 h-3.5 text-amber-500" />
               )}
-              <p className="text-xs font-bold opacity-60 mb-1">{sticker.codigo}</p>
+              <p className="text-xs font-bold opacity-60 mb-1">{formatStickerCode(sticker.codigo)}</p>
               <p className="text-xs font-semibold leading-tight line-clamp-2">{sticker.nome_jogador}</p>
               <p className="text-[10px] mt-1 opacity-50 truncate">{sticker.selecao}</p>
               <span className="mt-2 inline-block text-[10px] font-medium opacity-70">{STATUS_LABEL[sticker.status]}</span>
