@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, CheckCircle, XCircle, Copy } from 'lucide-react';
 import Link from 'next/link';
 import ShareRepeatedButton from '@/components/ShareRepeatedButton';
+import { ALBUM_GROUPS, NON_TEAM_PREFIXES } from '@/lib/data';
 
 function parseTrailingInt(value: unknown) {
   const match = String(value).match(/(\d+)\s*$/);
@@ -20,6 +21,14 @@ function toSortableNumber(value: unknown) {
   if (trailing !== null) return trailing;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : Number.MAX_SAFE_INTEGER;
+}
+
+function parseStickerCode(value: unknown) {
+  const raw = String(value).trim();
+  const cleaned = raw.replace(/[-_\s]+/g, '');
+  const match = cleaned.match(/^([a-z]{2,10})0*(\d+)$/i);
+  if (!match) return { prefix: null as string | null, index: null as number | null, raw };
+  return { prefix: match[1].toUpperCase(), index: Number(match[2]), raw };
 }
 
 export default async function DashboardPage() {
@@ -52,13 +61,51 @@ export default async function DashboardPage() {
         repeats: Number.isFinite(qty) ? Math.max(0, qty - 1) : 0,
       };
     })
-    .filter((i: { number: string; repeats: number }) => i.repeats > 0)
-    .sort((a: { number: string }, b: { number: string }) => {
-      const na = toSortableNumber(a.number);
-      const nb = toSortableNumber(b.number);
-      if (na !== nb) return na - nb;
-      return a.number.localeCompare(b.number);
+    .filter((i: { number: string; repeats: number }) => i.repeats > 0);
+
+  const groupOrder = new Map(Array.from('ABCDEFGHIJKL').map((g, idx) => [g, idx]));
+  const teamOrder = new Map<string, { groupRank: number; teamRank: number }>();
+  for (const [groupLetter, codes] of Object.entries(ALBUM_GROUPS)) {
+    const groupRank = groupOrder.get(groupLetter) ?? 99;
+    codes.forEach((code, teamRank) => {
+      teamOrder.set(code.toUpperCase(), { groupRank, teamRank });
     });
+  }
+
+  const nonTeamPrefixSet = new Set(NON_TEAM_PREFIXES);
+
+  const repeatedOrdered = [...repeatedItems].sort((a, b) => {
+    const ac = parseStickerCode(a.number);
+    const bc = parseStickerCode(b.number);
+    const ap = ac.prefix ?? '';
+    const bp = bc.prefix ?? '';
+
+    const aIsNonTeam = ap === '' || nonTeamPrefixSet.has(ap);
+    const bIsNonTeam = bp === '' || nonTeamPrefixSet.has(bp);
+    if (aIsNonTeam !== bIsNonTeam) return aIsNonTeam ? -1 : 1;
+
+    if (aIsNonTeam && bIsNonTeam) {
+      if (ap !== bp) return ap.localeCompare(bp);
+      const ai = ac.index ?? toSortableNumber(a.number);
+      const bi = bc.index ?? toSortableNumber(b.number);
+      if (ai !== bi) return ai - bi;
+      return a.number.localeCompare(b.number);
+    }
+
+    const ao = teamOrder.get(ap);
+    const bo = teamOrder.get(bp);
+    const agr = ao?.groupRank ?? 99;
+    const bgr = bo?.groupRank ?? 99;
+    if (agr !== bgr) return agr - bgr;
+    const atr = ao?.teamRank ?? 99;
+    const btr = bo?.teamRank ?? 99;
+    if (atr !== btr) return atr - btr;
+    if (ap !== bp) return ap.localeCompare(bp);
+    const ai = ac.index ?? toSortableNumber(a.number);
+    const bi = bc.index ?? toSortableNumber(b.number);
+    if (ai !== bi) return ai - bi;
+    return a.number.localeCompare(b.number);
+  });
 
   const stats = [
     { label: 'Total', value: total, icon: BookOpen, className: 'text-blue-500' },
@@ -75,7 +122,7 @@ export default async function DashboardPage() {
           <p className="text-sm text-muted-foreground">Copa do Mundo 2026</p>
         </div>
         <ShareRepeatedButton
-          items={repeatedItems}
+          items={repeatedOrdered}
           className="h-10 px-3 text-sm whitespace-nowrap"
         />
       </div>

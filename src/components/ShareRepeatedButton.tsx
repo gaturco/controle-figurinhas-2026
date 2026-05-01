@@ -41,14 +41,14 @@ type Item = { number: string; repeats: number };
 export default function ShareRepeatedButton({ items, className }: { items: Item[]; className?: string }) {
   const [copied, setCopied] = useState(false);
 
-  const enabledItems = items
+  const cleanedItems = items
     .map((i) => ({ number: i.number.trim(), repeats: i.repeats }))
     .filter((i) => i.number !== '' && i.repeats > 0);
 
-  const text = enabledItems
+  const text = cleanedItems
     .map((i) => `- ${formatStickerNumber(i.number)} (${i.repeats}x)`)
     .join('\n');
-  const disabled = enabledItems.length === 0;
+  const disabled = cleanedItems.length === 0;
 
   const handleCopy = async () => {
     if (disabled) return;

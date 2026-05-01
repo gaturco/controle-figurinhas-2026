@@ -79,3 +79,20 @@ especiais.forEach((nome, idx) => {
 });
 
 export const ALL_TEAMS = ["Todos", ...SELECOES.map(s => s.selecao), "Especial"];
+
+export const NON_TEAM_PREFIXES: string[] = ["FWC"];
+
+export const ALBUM_GROUPS: Record<string, string[]> = {
+  A: ["MEX", "RSA", "KOR", "CZE"],
+  B: ["CAN", "BIH", "QAT", "SUI"],
+  C: ["BRA", "MAR", "HAI", "SCO"],
+  D: ["USA", "PAR", "AUS", "TUR"],
+  E: ["GER", "CUW", "CIV", "ECU"],
+  F: ["NED", "JPN", "SWE", "TUN"],
+  G: ["BEL", "EGY", "IRN", "NZL"],
+  H: ["ESP", "CPV", "KSA", "URU"],
+  I: ["FRA", "SEN", "IRQ", "NOR"],
+  J: ["ARG", "ALG", "AUT", "JOR"],
+  K: ["POR", "COD", "UZB", "COL"],
+  L: ["ENG", "CRO", "GHA", "PAN"],
+};

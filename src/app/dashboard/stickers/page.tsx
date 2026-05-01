@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import sql from '@/lib/db';
 import StickersGrid from '@/components/StickersGrid';
+import { ALBUM_GROUPS, NON_TEAM_PREFIXES } from '@/lib/data';
 
 type DbSticker = {
   id: string;
@@ -10,14 +11,6 @@ type DbSticker = {
   player_name: string;
   quantity: number;
 };
-
-function normalizeKey(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase();
-}
 
 function parseTrailingInt(value: unknown) {
   const match = String(value).match(/(\d+)\s*$/);
@@ -42,22 +35,7 @@ function parseStickerCode(value: unknown) {
   return { prefix: match[1].toUpperCase(), index: Number(match[2]), raw };
 }
 
-const NON_TEAM_PREFIXES = new Set(['FWC']);
-
-const ALBUM_GROUPS: Record<string, string[]> = {
-  A: ['MEX', 'RSA', 'KOR', 'CZE'],
-  B: ['CAN', 'BIH', 'QAT', 'SUI'],
-  C: ['BRA', 'MAR', 'HAI', 'SCO'],
-  D: ['USA', 'PAR', 'AUS', 'TUR'],
-  E: ['GER', 'CUW', 'CIV', 'ECU'],
-  F: ['NED', 'JPN', 'SWE', 'TUN'],
-  G: ['BEL', 'EGY', 'IRN', 'NZL'],
-  H: ['ESP', 'CPV', 'KSA', 'URU'],
-  I: ['FRA', 'SEN', 'IRQ', 'NOR'],
-  J: ['ARG', 'ALG', 'AUT', 'JOR'],
-  K: ['POR', 'COD', 'UZB', 'COL'],
-  L: ['ENG', 'CRO', 'GHA', 'PAN'],
-};
+const NON_TEAM_PREFIX_SET = new Set(NON_TEAM_PREFIXES);
 
 export default async function StickersPage() {
   const session = await getServerSession(authOptions);
@@ -88,8 +66,8 @@ export default async function StickersPage() {
     const aPrefix = aCode.prefix;
     const bPrefix = bCode.prefix;
 
-    const aIsNonTeam = !aPrefix || NON_TEAM_PREFIXES.has(aPrefix);
-    const bIsNonTeam = !bPrefix || NON_TEAM_PREFIXES.has(bPrefix);
+    const aIsNonTeam = !aPrefix || NON_TEAM_PREFIX_SET.has(aPrefix);
+    const bIsNonTeam = !bPrefix || NON_TEAM_PREFIX_SET.has(bPrefix);
     if (aIsNonTeam !== bIsNonTeam) return aIsNonTeam ? -1 : 1;
 
     if (aIsNonTeam && bIsNonTeam) {
