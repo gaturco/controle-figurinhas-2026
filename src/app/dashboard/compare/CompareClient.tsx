@@ -42,22 +42,6 @@ function parseList(text: string) {
   return { uniqueKeys, invalid, totalLines: rawLines.length };
 }
 
-function sortStickerKeys(keys: string[]) {
-  const parsed = keys.map((k) => {
-    const match = k.match(/^([A-Z]{2,10})(\d+)$/);
-    if (!match) return { key: k, prefix: k, index: Number.MAX_SAFE_INTEGER };
-    return { key: k, prefix: match[1], index: Number(match[2]) };
-  });
-
-  parsed.sort((a, b) => {
-    if (a.prefix !== b.prefix) return a.prefix.localeCompare(b.prefix);
-    if (a.index !== b.index) return a.index - b.index;
-    return a.key.localeCompare(b.key);
-  });
-
-  return parsed.map((p) => p.key);
-}
-
 function formatStickerKey(key: string) {
   const match = key.match(/^([A-Z]{2,10})(\d+)$/);
   if (!match) return key;
@@ -86,8 +70,8 @@ export default function CompareClient({ userHaveNumbers }: { userHaveNumbers: st
     }
 
     return {
-      have: sortStickerKeys(have),
-      missing: sortStickerKeys(missing),
+      have,
+      missing,
     };
   }, [parsedOther.uniqueKeys, userHaveSet]);
 
