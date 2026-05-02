@@ -3,7 +3,7 @@
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpen, LogOut, Trophy } from 'lucide-react';
+import { LayoutDashboard, BookOpen, LogOut, Trophy, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -30,6 +30,7 @@ export default function DashboardNav() {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/stickers', label: 'Figurinhas', icon: BookOpen },
+    { href: '/dashboard/compare', label: 'Trocar', icon: GitCompare },
   ];
 
   return (
